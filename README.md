@@ -1,6 +1,7 @@
 # anonfiles-script
 An upload script for anonfiles.com made in python. Supports multiple files.
 
+ [![Publish package](https://github.com/jakbin/anonupload/actions/workflows/publish.yml/badge.svg)](https://github.com/jakbin/anonupload/actions/workflows/publish.yml)
  [![PyPI version](https://badge.fury.io/py/anonupload.svg)](https://pypi.org/project/anonupload/)
  [![Downloads](https://pepy.tech/badge/anonupload/month)](https://pepy.tech/project/anonupload)
  [![Downloads](https://static.pepy.tech/personalized-badge/anonupload?period=total&units=international_system&left_color=green&right_color=blue&left_text=Total%20Downloads)](https://pepy.tech/project/anonupload)
