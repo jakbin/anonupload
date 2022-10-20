@@ -1,5 +1,5 @@
 import setuptools
-from anonupload.main import __version__
+from anonupload import __version__
 
 with open("README.md", "r") as readme_file:
     readme = readme_file.read()
