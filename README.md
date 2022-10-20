@@ -25,7 +25,7 @@ pip3 install anonupload
 ## Usage 
 ```sh
 anon up {path-to-file_1} {path-to-file _2} ...  # upload file to anonfile server
-anon d {url1} {url2} ...              # download file 
+anon d {url1} {url2} ...              # and upload directly to anonfiles 
 ```
 
 # API
