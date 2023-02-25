@@ -41,7 +41,7 @@ from anonupload import upload
 upload([file1, file2])
 ```
 
-### anonupload.download([file1, file2])
+### anonupload.download([url1, url2])
 
 ```py
 from anonupload import download
