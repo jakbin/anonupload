@@ -1,12 +1,13 @@
 import os
 import sys
 import json
-import tqdm
 import argparse
 import requests
+from tqdm import tqdm
 from typing import List
 from pathlib import Path
 import requests_toolbelt
+import urllib.parse as urlparse
 from requests.exceptions import MissingSchema
 from requests import get, ConnectionError, head
 
@@ -15,7 +16,7 @@ from anonupload import __version__
 package_name = "anon"
 url = 'https://api.anonfiles.com/upload'
 
-class ProgressBar(tqdm.tqdm):
+class ProgressBar(tqdm):
 	def update_to(self, n: int) -> None:
 		"""Update the bar in the way compatible with requests-toolbelt.
 
@@ -24,7 +25,7 @@ class ProgressBar(tqdm.tqdm):
 		"""
 		self.update(n - self.n)  # will also do self.n = n
 
-def upload(filenames:List[str]):
+def upload(filenames: List[str]):
 	for filename in filenames:
 		if os.path.isdir(filename):
 			print('[ERROR] You cannot upload a directory!')
@@ -98,7 +99,50 @@ def upload(filenames:List[str]):
 			errtype = resp['error']['type']
 			print(f'[ERROR]: {message}\n{errtype}')
 
-def download(urls:List[str], path: Path=Path.cwd()):
+def filename_from_url(url):
+    fname = os.path.basename(urlparse.urlparse(url).path)
+    if len(fname.strip(" \n\t.")) == 0:
+        return None
+    return fname
+
+def filename_from_headers(headers):
+    if type(headers) == str:
+        headers = headers.splitlines()
+    if type(headers) == list:
+        headers = dict([x.split(':', 1) for x in headers])
+    cdisp = headers.get("Content-Disposition")
+    if not cdisp:
+        return None
+    cdtype = cdisp.split(';')
+    if len(cdtype) == 1:
+        return None
+    if cdtype[0].strip().lower() not in ('inline', 'attachment'):
+        return None
+    # several filename params is illegal, but just in case
+    fnames = [x for x in cdtype[1:] if x.strip().startswith('filename=')]
+    if len(fnames) > 1:
+        return None
+    name = fnames[0].split('=')[1].strip(' \t"')
+    name = os.path.basename(name)
+    if not name:
+        return None
+    return name
+
+def detect_filename(url=None, headers=None):
+    names = dict(out='', url='', headers='')
+    if url:
+        names["url"] = filename_from_url(url) or ''
+    if headers:
+        names["headers"] = filename_from_headers(headers) or ''
+    return names["out"] or names["headers"] or names["url"]
+
+def remove_file(filename: Path):
+	try:
+		os.remove(filename)
+	except FileNotFoundError:
+		print(f'[ERROR]: The file "{filename}" doesn\'t exist!')
+
+def download(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
 	for url in urls:
 		try:
 			filesize = int(head(url).headers["Content-Length"])
@@ -110,12 +154,12 @@ def download(urls:List[str], path: Path=Path.cwd()):
 		except KeyError:
 			filesize = None
 			
-		filename = os.path.basename(url)
+		filename = detect_filename(url, head(url).headers)
 		
 		chunk_size = 1024
 
 		try:
-			with get(url, stream=True) as r, open(path, "wb") as f, tqdm(
+			with get(url, stream=True) as r, open(filename, "wb") as f, tqdm(
 					unit="B",  # unit string to be displayed.
 					unit_scale=True,  # let tqdm to determine the scale in kilo, mega..etc.
 					unit_divisor=1024,  # is used when unit_scale is true
@@ -131,6 +175,8 @@ def download(urls:List[str], path: Path=Path.cwd()):
 
 		full_filename = os.path.join(path, filename)
 		upload([full_filename])
+		if delete:
+			remove_file(filename)
 	
 example_uses = '''example:
    anon up {files_name}
@@ -146,18 +192,16 @@ def main(argv = None):
 	download_parser = subparsers.add_parser("d", help="download files and upload directly to anonfiles")
 	download_parser.add_argument("filename", nargs='+', type=str, help="one or more URLs to download")
 	download_parser.add_argument('-p', '--path', type=Path, default=Path.cwd(), help="download directory (CWD by default)")
+	download_parser.add_argument('-del', '--delete', action="store_true", dest="delete", help="Delete file after upload, default : Falses")
 
-	parser.add_argument('-v',"--version",
-							action="store_true",
-							dest="version",
-							help="check version of deb")
+	parser.add_argument('-v',"--version", action="store_true", dest="version", help="check version of anonupload")
 
 	args = parser.parse_args(argv)
 
 	if args.command == "up":
 		return upload(args.filename)
 	elif args.command == "d":
-		return download(args.filename, args.path)
+		return download(args.filename, args.path, args.delete)
 	elif args.version:
 		return print(__version__)
 	else:
