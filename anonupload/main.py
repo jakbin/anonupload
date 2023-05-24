@@ -206,7 +206,7 @@ def main(argv = None):
 	args = parser.parse_args(argv)
 
 	if args.command == "up":
-		return upload(args.filename)
+		return changefile_and_upload(args.filename)
 	elif args.command == "d":
 		return download(args.filename, args.path, args.delete)
 	elif args.version:

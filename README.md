@@ -38,7 +38,12 @@ The anonfile-upload client is also usable through an API (for test integration, 
 ```py
 from anonupload import upload
 
-upload([file1, file2])
+upload(filename)
+```
+
+```py
+from anonupload import changefile_and_upload
+changefile_and_upload([file1, file2])
 ```
 
 ### anonupload.download([url1, url2])

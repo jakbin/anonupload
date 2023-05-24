@@ -1,3 +1,3 @@
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
-from .main import download, upload
+from .main import download, upload, changefile_and_upload
