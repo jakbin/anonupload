@@ -14,7 +14,7 @@ from requests import get, ConnectionError, head
 from anonupload import __version__
 
 package_name = "anon"
-url = 'https://api.anonfiles.com/upload'
+url = 'https://api.openload.cc/upload'
 
 class ProgressBar(tqdm):
 	def update_to(self, n: int) -> None:
@@ -25,7 +25,51 @@ class ProgressBar(tqdm):
 		"""
 		self.update(n - self.n)  # will also do self.n = n
 
-def upload(filenames: List[str]):
+def upload(filename):
+
+	data_to_send = []
+	session = requests.session()
+
+	with open(filename, "rb") as fp:
+		data_to_send.append(
+			("file", (os.path.basename(filename), fp))
+		)
+		encoder = requests_toolbelt.MultipartEncoder(data_to_send)
+		with ProgressBar(
+			total=encoder.len,
+			unit="B",
+			unit_scale=True,
+			unit_divisor=1024,
+			miniters=1,
+			file=sys.stdout,
+		) as bar:
+			monitor = requests_toolbelt.MultipartEncoderMonitor(
+				encoder, lambda monitor: bar.update_to(monitor.bytes_read)
+			)
+
+			r = session.post(
+				url,
+				data=monitor,
+				allow_redirects=False,
+				headers={"Content-Type": monitor.content_type},
+			)
+
+	resp = json.loads(r.text)
+	if resp['status']:
+		urlshort = resp['data']['file']['url']['short']
+		urllong = resp['data']['file']['url']['full']
+		print(f'[SUCCESS]: Your file has been succesfully uploaded:\nFull URL: {urllong}\nShort URL: {urlshort}')
+		with open('urls.txt', 'a+') as f:
+			f.write(urllong)
+		print('url saved in urls.txt file')
+		return urlshort, urllong
+	else:
+		message = resp['error']['message']
+		errtype = resp['error']['type']
+		print(f'[ERROR]: {message}\n{errtype}')
+		return message, errtype
+
+def changefile_and_upload(filenames: List[str]):
 	for filename in filenames:
 		if os.path.isdir(filename):
 			print('[ERROR] You cannot upload a directory!')
@@ -58,46 +102,9 @@ def upload(filenames: List[str]):
 			filename = input_name
 		else:
 			print("[UPLOADING]: ", filename)
-
-		data_to_send = []
-		session = requests.session()
-
-		with open(filename, "rb") as fp:
-			data_to_send.append(
-				("file", (filename, fp))
-			)
-			encoder = requests_toolbelt.MultipartEncoder(data_to_send)
-			with ProgressBar(
-				total=encoder.len,
-				unit="B",
-				unit_scale=True,
-				unit_divisor=1024,
-				miniters=1,
-				file=sys.stdout,
-			) as bar:
-				monitor = requests_toolbelt.MultipartEncoderMonitor(
-					encoder, lambda monitor: bar.update_to(monitor.bytes_read)
-				)
-
-				r = session.post(
-					url,
-					data=monitor,
-					allow_redirects=False,
-					headers={"Content-Type": monitor.content_type},
-				)
-
-		resp = json.loads(r.text)
-		if resp['status']:
-			urlshort = resp['data']['file']['url']['short']
-			urllong = resp['data']['file']['url']['full']
-			print(f'[SUCCESS]: Your file has been succesfully uploaded:\nFull URL: {urllong}\nShort URL: {urlshort}')
-			with open('urls.txt', 'a+') as f:
-				f.write(urllong)
-			print('url saved in urls.txt file')
-		else:
-			message = resp['error']['message']
-			errtype = resp['error']['type']
-			print(f'[ERROR]: {message}\n{errtype}')
+		
+		upload(filename)
+	
 
 def filename_from_url(url):
     fname = os.path.basename(urlparse.urlparse(url).path)
@@ -174,7 +181,7 @@ def download(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
 			return 1
 
 		full_filename = os.path.join(path, filename)
-		upload([full_filename])
+		upload(full_filename)
 		if delete:
 			remove_file(filename)
 	
