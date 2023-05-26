@@ -149,7 +149,7 @@ def remove_file(filename: Path):
 	except FileNotFoundError:
 		print(f'[ERROR]: The file "{filename}" doesn\'t exist!')
 
-def download(url: str, path: Path=Path.cwd(), delete: bool=False):
+def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete: bool=False):
 	try:
 		filesize = int(head(url).headers["Content-Length"])
 	except ConnectionError:
@@ -159,8 +159,11 @@ def download(url: str, path: Path=Path.cwd(), delete: bool=False):
 		sys.exit(str(e))
 	except KeyError:
 		filesize = None
-		
-	filename = detect_filename(url, head(url).headers)
+	
+	if custom_filename == None:
+		filename = detect_filename(url, head(url).headers)
+	else:
+		filename = custom_filename
 	
 	chunk_size = 1024
 
