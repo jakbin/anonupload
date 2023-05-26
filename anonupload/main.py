@@ -159,16 +159,21 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete:
 		sys.exit(str(e))
 	except KeyError:
 		filesize = None
+
+	if not os.path.isdir(path):
+		os.mkdir(path)
 	
 	if custom_filename == None:
 		filename = detect_filename(url, head(url).headers)
+		full_filename = os.path.join(path, filename)
 	else:
 		filename = custom_filename
+		full_filename = os.path.join(path, filename)
 	
 	chunk_size = 1024
 
 	try:
-		with get(url, stream=True) as r, open(filename, "wb") as f, tqdm(
+		with get(url, stream=True) as r, open(full_filename, "wb") as f, tqdm(
 				unit="B",  # unit string to be displayed.
 				unit_scale=True,  # let tqdm to determine the scale in kilo, mega..etc.
 				unit_divisor=1024,  # is used when unit_scale is true
@@ -182,10 +187,9 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete:
 	except ConnectionError:
 		return 1
 
-	full_filename = os.path.join(path, filename)
 	first_msg, second_msg = upload(full_filename)
 	if delete:
-		remove_file(filename)
+		remove_file(full_filename)
 	return first_msg, second_msg
 
 def downloads(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
