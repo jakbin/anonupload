@@ -51,5 +51,7 @@ changefile_and_upload([file1, file2])
 ```py
 from anonupload import download
 
-download([url1, url2])
+download(url)
+
+downloads([url1, url2])
 ```

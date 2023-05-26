@@ -12,11 +12,11 @@ setuptools.setup(
     description="upload and download to anonfiles server",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="https://github.com/redevil1/anonfiles",
+    url="https://github.com/jakbin/anonupload",
     install_requires=["tqdm","requests","requests-toolbelt"],
     python_requires=">=3",
     project_urls={
-        "Bug Tracker": "https://github.com/redevil1/anonfiles/issues",
+        "Bug Tracker": "https://github.com/jakbin/anonupload/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3.6",

@@ -60,7 +60,7 @@ def upload(filename):
 		urllong = resp['data']['file']['url']['full']
 		print(f'[SUCCESS]: Your file has been succesfully uploaded:\nFull URL: {urllong}\nShort URL: {urlshort}')
 		with open('urls.txt', 'a+') as f:
-			f.write(urllong)
+			f.write(f"{urllong}\n")
 		print('url saved in urls.txt file')
 		return urlshort, urllong
 	else:
@@ -149,41 +149,45 @@ def remove_file(filename: Path):
 	except FileNotFoundError:
 		print(f'[ERROR]: The file "{filename}" doesn\'t exist!')
 
-def download(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
-	for url in urls:
-		try:
-			filesize = int(head(url).headers["Content-Length"])
-		except ConnectionError:
-			print("[Error]: No internet")
-			return 1
-		except MissingSchema as e:
-			sys.exit(str(e))
-		except KeyError:
-			filesize = None
-			
-		filename = detect_filename(url, head(url).headers)
+def download(url: str, path: Path=Path.cwd(), delete: bool=False):
+	try:
+		filesize = int(head(url).headers["Content-Length"])
+	except ConnectionError:
+		print("[Error]: No internet")
+		return 1
+	except MissingSchema as e:
+		sys.exit(str(e))
+	except KeyError:
+		filesize = None
 		
-		chunk_size = 1024
+	filename = detect_filename(url, head(url).headers)
+	
+	chunk_size = 1024
 
-		try:
-			with get(url, stream=True) as r, open(filename, "wb") as f, tqdm(
-					unit="B",  # unit string to be displayed.
-					unit_scale=True,  # let tqdm to determine the scale in kilo, mega..etc.
-					unit_divisor=1024,  # is used when unit_scale is true
-					total=filesize,  # the total iteration.
-					file=sys.stdout,  # default goes to stderr, this is the display on console.
-					desc=filename  # prefix to be displayed on progress bar.
-			) as progress:
-				for chunk in r.iter_content(chunk_size=chunk_size):
-					datasize = f.write(chunk)
-					progress.update(datasize)
-		except ConnectionError:
-			return 1
+	try:
+		with get(url, stream=True) as r, open(filename, "wb") as f, tqdm(
+				unit="B",  # unit string to be displayed.
+				unit_scale=True,  # let tqdm to determine the scale in kilo, mega..etc.
+				unit_divisor=1024,  # is used when unit_scale is true
+				total=filesize,  # the total iteration.
+				file=sys.stdout,  # default goes to stderr, this is the display on console.
+				desc=filename  # prefix to be displayed on progress bar.
+		) as progress:
+			for chunk in r.iter_content(chunk_size=chunk_size):
+				datasize = f.write(chunk)
+				progress.update(datasize)
+	except ConnectionError:
+		return 1
 
-		full_filename = os.path.join(path, filename)
-		upload(full_filename)
-		if delete:
-			remove_file(filename)
+	full_filename = os.path.join(path, filename)
+	first_msg, second_msg = upload(full_filename)
+	if delete:
+		remove_file(filename)
+	return first_msg, second_msg
+
+def downloads(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
+	for url in urls:
+		download(url, path, delete)
 	
 example_uses = '''example:
    anon up {files_name}
@@ -208,7 +212,7 @@ def main(argv = None):
 	if args.command == "up":
 		return changefile_and_upload(args.filename)
 	elif args.command == "d":
-		return download(args.filename, args.path, args.delete)
+		return downloads(args.filename, args.path, args.delete)
 	elif args.version:
 		return print(__version__)
 	else:
