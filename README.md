@@ -46,12 +46,18 @@ from anonupload import changefile_and_upload
 changefile_and_upload([file1, file2])
 ```
 
-### anonupload.download([url1, url2])
+### anonupload.download(url)
 
 ```py
 from anonupload import download
 
 download(url)
+```
+
+### anonupload.download([url1, url2])
+
+```py
+from anonupload import download
 
 downloads([url1, url2])
 ```
