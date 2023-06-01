@@ -194,7 +194,7 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete:
 
 def downloads(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
 	for url in urls:
-		download(url, path, delete)
+		download(url=url, path=path, delete=delete)
 	
 example_uses = '''example:
    anon up {files_name}
