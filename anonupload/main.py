@@ -14,7 +14,7 @@ from requests import get, ConnectionError, head
 from anonupload import __version__
 
 package_name = "anon"
-url = 'https://api.openload.cc/upload'
+url = 'https://anonymfile.com/api/v1/upload'
 
 class ProgressBar(tqdm):
 	def update_to(self, n: int) -> None:
