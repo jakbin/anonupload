@@ -54,10 +54,10 @@ from anonupload import download
 download(url)
 ```
 
-### anonupload.download([url1, url2])
+### anonupload.downloads([url1, url2])
 
 ```py
-from anonupload import download
+from anonupload import downloads
 
 downloads([url1, url2])
 ```
