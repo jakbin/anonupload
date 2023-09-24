@@ -56,13 +56,13 @@ def upload(filename):
 
 	resp = json.loads(r.text)
 	if resp['status']:
-		urlshort = resp['data']['file']['url']['short']
+		# urlshort = resp['data']['file']['url']['short']
 		urllong = resp['data']['file']['url']['full']
-		print(f'[SUCCESS]: Your file has been succesfully uploaded:\nFull URL: {urllong}\nShort URL: {urlshort}')
+		print(f'[SUCCESS]: Your file has been succesfully uploaded:\nFull URL: {urllong}')
 		with open('urls.txt', 'a+') as f:
 			f.write(f"{urllong}\n")
 		print('url saved in urls.txt file')
-		return urlshort, urllong
+		return urllong
 	else:
 		message = resp['error']['message']
 		errtype = resp['error']['type']
