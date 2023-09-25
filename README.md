@@ -33,7 +33,7 @@ anon d {url1} {url2} ...              # and upload directly to anonfiles
 
 The anonfile-upload client is also usable through an API (for test integration, automation, etc)
 
-### anonupload.upload([file1, file2])
+### anonupload.upload(filename)
 
 ```py
 from anonupload import upload
