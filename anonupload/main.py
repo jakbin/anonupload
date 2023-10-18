@@ -187,7 +187,7 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete:
 	except ConnectionError:
 		return 1
 
-	first_msg, second_msg = upload(full_filename)
+	first_msg = upload(full_filename)
 	if delete:
 		remove_file(full_filename)
 	return first_msg, second_msg
