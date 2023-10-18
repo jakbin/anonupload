@@ -190,7 +190,7 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete:
 	first_msg = upload(full_filename)
 	if delete:
 		remove_file(full_filename)
-	return first_msg, second_msg
+	return first_msg
 
 def downloads(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
 	for url in urls:
