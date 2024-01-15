@@ -8,7 +8,7 @@ from typing import List
 from pathlib import Path
 import requests_toolbelt
 import urllib.parse as urlparse
-from requests.exceptions import MissingSchema
+from requests.exceptions import MissingSchema, JSONDecodeError
 from requests import get, ConnectionError, head
 
 from anonupload import __version__
@@ -54,20 +54,24 @@ def upload(filename):
 				headers={"Content-Type": monitor.content_type},
 			)
 
-	resp = json.loads(r.text)
-	if resp['status']:
-		# urlshort = resp['data']['file']['url']['short']
-		urllong = resp['data']['file']['url']['full']
-		print(f'[SUCCESS]: Your file has been succesfully uploaded:\nFull URL: {urllong}')
-		with open('urls.txt', 'a+') as f:
-			f.write(f"{urllong}\n")
-		print('url saved in urls.txt file')
-		return urllong
-	else:
-		message = resp['error']['message']
-		errtype = resp['error']['type']
-		print(f'[ERROR]: {message}\n{errtype}')
-		return message, errtype
+	try:
+		resp = json.loads(r.text)
+
+		if resp['status']:
+			# urlshort = resp['data']['file']['url']['short']
+			urllong = resp['data']['file']['url']['full']
+			print(f'[SUCCESS]: Your file has been succesfully uploaded:\nFull URL: {urllong}')
+			with open('urls.txt', 'a+') as f:
+				f.write(f"{urllong}\n")
+			print('url saved in urls.txt file')
+			return urllong
+		else:
+			message = resp['error']['message']
+			errtype = resp['error']['type']
+			print(f'[ERROR]: {message}\n{errtype}')
+			return message, errtype
+	except JSONDecodeError:
+		print(r.text)
 
 def changefile_and_upload(filenames: List[str]):
 	for filename in filenames:
