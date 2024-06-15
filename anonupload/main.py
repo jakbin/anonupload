@@ -14,7 +14,6 @@ from requests import get, ConnectionError, head
 from anonupload import __version__
 
 package_name = "anon"
-url = 'https://anonymfile.com/api/v1/upload'
 
 class ProgressBar(tqdm):
 	def update_to(self, n: int) -> None:
@@ -25,7 +24,7 @@ class ProgressBar(tqdm):
 		"""
 		self.update(n - self.n)  # will also do self.n = n
 
-def upload(filename):
+def upload(url: str, filename: str):
 
 	data_to_send = []
 	session = requests.session()
@@ -57,23 +56,31 @@ def upload(filename):
 	try:
 		resp = json.loads(r.text)
 
-		if resp['status']:
+		if resp['success']:
 			# urlshort = resp['data']['file']['url']['short']
-			urllong = resp['data']['file']['url']['full']
-			print(f'[SUCCESS]: Your file has been succesfully uploaded:\nFull URL: {urllong}')
+			link = resp['link']
+			expiry = resp['expires']
+			print(f'[SUCCESS]\nURL: {link}')
+			print(f'Your file will expires in {expiry}')
 			with open('urls.txt', 'a+') as f:
-				f.write(f"{urllong}\n")
+				f.write(f"{link}\n")
 			print('url saved in urls.txt file')
-			return urllong
+			return link
 		else:
-			message = resp['error']['message']
-			errtype = resp['error']['type']
-			print(f'[ERROR]: {message}\n{errtype}')
-			return message, errtype
+			error = resp['error']
+			message = resp['message']
+			print(f'[ERROR]: {error}\n{message}')
+			return message
 	except JSONDecodeError:
 		print(r.text)
+	except KeyError:
+		print(r.text)
 
-def changefile_and_upload(filenames: List[str]):
+def multi_upload(url: str, filenames: List[str]):
+	for filename in filenames:
+		upload(url, filename)
+
+def changefile_and_upload(filenames: List[str], expiry: str):
 	for filename in filenames:
 		if os.path.isdir(filename):
 			print('[ERROR] You cannot upload a directory!')
@@ -106,8 +113,13 @@ def changefile_and_upload(filenames: List[str]):
 			filename = input_name
 		else:
 			print("[UPLOADING]: ", filename)
-		
-		upload(filename)
+
+		if expiry == None:
+			url = 'https://file.io'
+			upload(url, filename)
+		else:
+			url = f'https://file.io/?expires={expiry}'
+			upload(url, filename)
 	
 
 def filename_from_url(url):
@@ -191,7 +203,7 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete:
 	except ConnectionError:
 		return 1
 
-	first_msg = upload(full_filename)
+	first_msg = upload('https://file.io', full_filename)
 	if delete:
 		remove_file(full_filename)
 	return first_msg
@@ -209,10 +221,11 @@ def main(argv = None):
 	subparsers = parser.add_subparsers(dest="command")
 
 	upload_parser = subparsers.add_parser("up", help="upload files to https://anonfiles.com")
-	upload_parser.add_argument("filename", type=str, nargs='+', help="one or more files to upload")
+	upload_parser.add_argument("files", type=str, nargs='+', help="one or more files to upload")
+	upload_parser.add_argument('-ex', '--expiry', type=str, default=None, help="Time to expire file. Like :- 3m, 2h, 4d, 1w, 2M, 1y etc.")
 
 	download_parser = subparsers.add_parser("d", help="download files and upload directly to anonfiles")
-	download_parser.add_argument("filename", nargs='+', type=str, help="one or more URLs to download")
+	download_parser.add_argument("files", nargs='+', type=str, help="one or more URLs to download")
 	download_parser.add_argument('-p', '--path', type=Path, default=Path.cwd(), help="download directory (CWD by default)")
 	download_parser.add_argument('-del', '--delete', action="store_true", dest="delete", help="Delete file after upload, default : Falses")
 
@@ -221,9 +234,15 @@ def main(argv = None):
 	args = parser.parse_args(argv)
 
 	if args.command == "up":
-		return changefile_and_upload(args.filename)
+		# return changefile_and_upload(args.files, args.expiry)
+		if args.expiry == None:
+			url = 'https://file.io'
+			multi_upload(url, args.files)
+		else:
+			url = f'https://file.io/?expires={args.expiry}'
+			multi_upload(url, args.files)
 	elif args.command == "d":
-		return downloads(args.filename, args.path, args.delete)
+		return downloads(args.files, args.path, args.delete)
 	elif args.version:
 		return print(__version__)
 	else:

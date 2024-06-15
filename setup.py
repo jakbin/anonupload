@@ -28,7 +28,8 @@ setuptools.setup(
     packages=["anonupload"],
     entry_points={
         "console_scripts":[
-            "anon = anonupload.main:main"
+            "anon = anonupload.main:main",
+            "anonupload = anonupload.main:main"
         ]
     }
 )
