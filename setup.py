@@ -13,7 +13,7 @@ setuptools.setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     url="https://github.com/jakbin/anonupload",
-    install_requires=["tqdm","requests","requests-toolbelt"],
+    install_requires=["tqdm","requests","requests-toolbelt", "appdirs"],
     python_requires=">=3",
     project_urls={
         "Bug Tracker": "https://github.com/jakbin/anonupload/issues",
