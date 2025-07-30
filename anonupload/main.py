@@ -1,19 +1,17 @@
 import os
 import sys
 import json
-import argparse
 import requests
 from tqdm import tqdm
 from typing import List
 from pathlib import Path
 import requests_toolbelt
 import urllib.parse as urlparse
-from requests.exceptions import MissingSchema, JSONDecodeError
+from requests.exceptions import MissingSchema
 from requests import get, ConnectionError, head
 
 from anonupload import __version__
 
-package_name = "anon"
 
 class ProgressBar(tqdm):
 	def update_to(self, n: int) -> None:
@@ -56,22 +54,20 @@ def upload(url: str, filename: str):
 	try:
 		resp = json.loads(r.text)
 
-		if resp['success']:
-			# urlshort = resp['data']['file']['url']['short']
-			link = resp['link']
-			expiry = resp['expires']
-			print(f'[SUCCESS]\nURL: {link}')
-			print(f'Your file will expires in {expiry}')
+		if resp['status']:
+			urlshort = resp['data']['file']['url']['short']
+			urlfull = resp['data']['file']['url']['full']
+			print(f'[SUCCESS] Short URL: {urlshort}\nFull URL: {urlfull}')
 			with open('urls.txt', 'a+') as f:
-				f.write(f"{link}\n")
+				f.write(f"{urlshort}\n")
 			print('url saved in urls.txt file')
-			return link
+			return urlshort
 		else:
 			error = resp['error']
 			message = resp['message']
 			print(f'[ERROR]: {error}\n{message}')
 			return message
-	except JSONDecodeError:
+	except json.decoder.JSONDecodeError:
 		print(r.text)
 	except KeyError:
 		print(r.text)
@@ -211,42 +207,3 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete:
 def downloads(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
 	for url in urls:
 		download(url=url, path=path, delete=delete)
-	
-example_uses = '''example:
-   anon up {files_name}
-   anon d {urls}'''
-
-def main(argv = None):
-	parser = argparse.ArgumentParser(prog=package_name, description="upload your files on anonfile server", epilog=example_uses, formatter_class=argparse.RawDescriptionHelpFormatter)
-	subparsers = parser.add_subparsers(dest="command")
-
-	upload_parser = subparsers.add_parser("up", help="upload files to https://anonfiles.com")
-	upload_parser.add_argument("files", type=str, nargs='+', help="one or more files to upload")
-	upload_parser.add_argument('-ex', '--expiry', type=str, default=None, help="Time to expire file. Like :- 3m, 2h, 4d, 1w, 2M, 1y etc.")
-
-	download_parser = subparsers.add_parser("d", help="download files and upload directly to anonfiles")
-	download_parser.add_argument("files", nargs='+', type=str, help="one or more URLs to download")
-	download_parser.add_argument('-p', '--path', type=Path, default=Path.cwd(), help="download directory (CWD by default)")
-	download_parser.add_argument('-del', '--delete', action="store_true", dest="delete", help="Delete file after upload, default : Falses")
-
-	parser.add_argument('-v',"--version", action="store_true", dest="version", help="check version of anonupload")
-
-	args = parser.parse_args(argv)
-
-	if args.command == "up":
-		# return changefile_and_upload(args.files, args.expiry)
-		if args.expiry == None:
-			url = 'https://file.io'
-			multi_upload(url, args.files)
-		else:
-			url = f'https://file.io/?expires={args.expiry}'
-			multi_upload(url, args.files)
-	elif args.command == "d":
-		return downloads(args.files, args.path, args.delete)
-	elif args.version:
-		return print(__version__)
-	else:
-		parser.print_help()
-
-if __name__ == '__main__':
-	raise SystemExit(main())
