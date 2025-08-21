@@ -161,7 +161,7 @@ def remove_file(filename: Path):
 	except FileNotFoundError:
 		print(f'[ERROR]: The file "{filename}" doesn\'t exist!')
 
-def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete: bool=False):
+def download(url: str, server_url: str, custom_filename: str=None, path: Path=Path.cwd(), delete: bool=False):
 	try:
 		filesize = int(head(url).headers["Content-Length"])
 	except ConnectionError:
@@ -199,11 +199,11 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), delete:
 	except ConnectionError:
 		return 1
 
-	first_msg = upload('https://file.io', full_filename)
+	first_msg = upload(server_url, full_filename)
 	if delete:
 		remove_file(full_filename)
 	return first_msg
 
-def downloads(urls: List[str], path: Path=Path.cwd(), delete: bool=False):
+def downloads(urls: List[str], server_url: str, path: Path=Path.cwd(), delete: bool=False):
 	for url in urls:
-		download(url=url, path=path, delete=delete)
+		download(url=url, server_url=server_url, path=path, delete=delete)

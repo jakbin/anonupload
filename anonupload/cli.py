@@ -47,7 +47,7 @@ def main(argv = None):
 			ex_url = f'{url}/?expires={args.expiry}'
 			multi_upload(ex_url, args.files)
 	elif args.command == "d":
-		return downloads(args.files, args.path, args.delete)
+		return downloads(args.files, url,  args.path, args.delete)
 	elif args.version:
 		return print(__version__)
 	else:
