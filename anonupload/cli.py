@@ -31,7 +31,7 @@ def main(argv = None):
 	download_parser = subparsers.add_parser("d", help="download files and upload directly to anonfiles")
 	download_parser.add_argument("files", nargs='+', type=str, help="one or more URLs to download")
 	download_parser.add_argument('-p', '--path', type=Path, default=Path.cwd(), help="download directory (CWD by default)")
-	download_parser.add_argument('-del', '--delete', action="store_true", dest="delete", help="Delete file after upload, default : Falses")
+	download_parser.add_argument('-del', '--delete', action="store_true", dest="delete", help="Delete file after upload, default : False")
 
 	parser.add_argument('-v',"--version", action="store_true", dest="version", help="check version of anonupload")
 
@@ -42,10 +42,10 @@ def main(argv = None):
 	elif args.command == "up":
 		# return changefile_and_upload(args.files, args.expiry)
 		if args.expiry == None:
-			multi_upload(url, args.files)
+			multi_upload(url, args.files, verbose=True)
 		else:
 			ex_url = f'{url}/?expires={args.expiry}'
-			multi_upload(ex_url, args.files)
+			multi_upload(ex_url, args.files, verbose=True)
 	elif args.command == "d":
 		return downloads(args.files, url,  args.path, args.delete)
 	elif args.version:

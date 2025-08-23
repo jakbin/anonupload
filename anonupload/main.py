@@ -22,7 +22,7 @@ class ProgressBar(tqdm):
 		"""
 		self.update(n - self.n)  # will also do self.n = n
 
-def upload(url: str, filename: str):
+def upload(url: str, filename: str, verbose: bool=False):
 
 	data_to_send = []
 	session = requests.session()
@@ -57,24 +57,35 @@ def upload(url: str, filename: str):
 		if resp['status']:
 			urlshort = resp['data']['file']['url']['short']
 			urlfull = resp['data']['file']['url']['full']
-			print(f'[SUCCESS] Short URL: {urlshort}\nFull URL: {urlfull}')
-			with open('urls.txt', 'a+') as f:
-				f.write(f"{urlshort}\n")
-			print('url saved in urls.txt file')
+			if verbose:
+				print(f'[SUCCESS] Short URL: {urlshort}\nFull URL: {urlfull}')
+				with open('urls.txt', 'a+') as f:
+					f.write(f"{urlshort}\n")
+				print('url saved in urls.txt file')
 			return urlshort
 		else:
 			error = resp['error']
 			message = resp['message']
-			print(f'[ERROR]: {error}\n{message}')
+			if verbose:
+				print(f'[ERROR]: {error}\n{message}')
 			return message
 	except json.decoder.JSONDecodeError:
-		print(r.text)
+		if verbose:
+			print(f'[ERROR]: {r.text}')
+		return r.text
 	except KeyError:
-		print(r.text)
+		if verbose:
+			print(r.text)
+		return r.text
+	except ConnectionError:
+		if verbose:
+			print("[Error]: No internet")
+		return "[Error]: No internet"
 
-def multi_upload(url: str, filenames: List[str]):
+def multi_upload(url: str, filenames: List[str], verbose: bool=False):
 	for filename in filenames:
-		upload(url, filename)
+		res = upload(url, filename, verbose)
+		print(res)
 
 def changefile_and_upload(filenames: List[str], expiry: str):
 	for filename in filenames:
@@ -161,7 +172,7 @@ def remove_file(filename: Path):
 	except FileNotFoundError:
 		print(f'[ERROR]: The file "{filename}" doesn\'t exist!')
 
-def download(url: str, server_url: str, custom_filename: str=None, path: Path=Path.cwd(), delete: bool=False):
+def download(url: str, custom_filename: str=None, path: Path=Path.cwd()):
 	try:
 		filesize = int(head(url).headers["Content-Length"])
 	except ConnectionError:
@@ -197,13 +208,18 @@ def download(url: str, server_url: str, custom_filename: str=None, path: Path=Pa
 				datasize = f.write(chunk)
 				progress.update(datasize)
 	except ConnectionError:
-		return 1
+		return 0
 
-	first_msg = upload(server_url, full_filename)
+	return full_filename
+
+def download_and_upload(url: str, server_url: str, custom_filename: str=None, path: Path=Path.cwd(), delete: bool=False):
+	full_filename = download(url=url, custom_filename=custom_filename, path=path)
+	res_url = upload(server_url, full_filename, verbose=True)
 	if delete:
 		remove_file(full_filename)
-	return first_msg
+	return res_url
 
 def downloads(urls: List[str], server_url: str, path: Path=Path.cwd(), delete: bool=False):
 	for url in urls:
-		download(url=url, server_url=server_url, path=path, delete=delete)
+		res_url = download_and_upload(url=url, server_url=server_url, path=path, delete=delete)
+		print(res_url)
