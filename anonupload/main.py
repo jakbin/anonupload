@@ -177,7 +177,7 @@ def remove_file(filename: Path):
 
 def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), verify_ssl: bool=False):
 	try:
-		filesize = int(head(url).headers["Content-Length"])
+		filesize = int(head(url, verify=verify_ssl).headers["Content-Length"])
 	except ConnectionError:
 		print("[Error]: No internet")
 		return 1
