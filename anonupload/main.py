@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import urllib3
 import requests
 from tqdm import tqdm
 from typing import List
@@ -11,6 +12,8 @@ from requests.exceptions import MissingSchema
 from requests import get, ConnectionError, head
 
 from anonupload import __version__
+
+urllib3.disable_warnings()
 
 
 class ProgressBar(tqdm):
@@ -172,7 +175,7 @@ def remove_file(filename: Path):
 	except FileNotFoundError:
 		print(f'[ERROR]: The file "{filename}" doesn\'t exist!')
 
-def download(url: str, custom_filename: str=None, path: Path=Path.cwd()):
+def download(url: str, custom_filename: str=None, path: Path=Path.cwd(), verify_ssl: bool=False):
 	try:
 		filesize = int(head(url).headers["Content-Length"])
 	except ConnectionError:
@@ -196,7 +199,7 @@ def download(url: str, custom_filename: str=None, path: Path=Path.cwd()):
 	chunk_size = 1024
 
 	try:
-		with get(url, stream=True) as r, open(full_filename, "wb") as f, tqdm(
+		with get(url, stream=True, verify=verify_ssl) as r, open(full_filename, "wb") as f, tqdm(
 				unit="B",  # unit string to be displayed.
 				unit_scale=True,  # let tqdm to determine the scale in kilo, mega..etc.
 				unit_divisor=1024,  # is used when unit_scale is true
